@@ -30,12 +30,19 @@ from query_tree import QueryTree, TreeNode, NodeType
 from execution_plan import ExecutionPlanGenerator
 
 
+# Tema escuro
+BG_COLOR = "#0F172A"
+INPUT_BG = "#1E1B4B"  # roxo escuro
+TEXT_COLOR = "#E5E7EB"
+CANVAS_BG = "#020617"
+
+
 # Cores para os nós da árvore no Canvas
 NODE_COLORS = {
-    NodeType.TABLE: "#FFFACD",       # amarelo claro
-    NodeType.SELECTION: "#ADD8E6",   # azul claro
-    NodeType.PROJECTION: "#90EE90",  # verde claro
-    NodeType.JOIN: "#FFA07A",        # salmão
+    NodeType.TABLE: "#FFFACD",
+    NodeType.SELECTION: "#ADD8E6",
+    NodeType.PROJECTION: "#90EE90",
+    NodeType.JOIN: "#FFA07A",
 }
 
 NODE_BORDER_COLORS = {
@@ -49,18 +56,13 @@ NODE_BORDER_COLORS = {
 class TreeDrawer:
     """
     Desenha a árvore de operadores em um Canvas Tkinter.
-
-    Algoritmo de layout:
-    - Folhas recebem posições x sequenciais (0, 1, 2, ...)
-    - Nós internos recebem x = média dos filhos
-    - y é baseado na profundidade do nó
     """
 
-    H_SPACING = 200     # espaçamento horizontal entre folhas (pixels)
-    V_SPACING = 90      # espaçamento vertical entre níveis
-    NODE_PADX = 14      # padding horizontal do texto no nó
-    NODE_PADY = 8       # padding vertical do texto no nó
-    MARGIN = 60         # margem ao redor da árvore
+    H_SPACING = 200
+    V_SPACING = 90
+    NODE_PADX = 14
+    NODE_PADY = 8
+    MARGIN = 60
 
     def __init__(self, canvas: tk.Canvas, root_node: TreeNode):
         self.canvas = canvas
@@ -69,7 +71,6 @@ class TreeDrawer:
         self._leaf_counter = 0
 
     def draw(self):
-        """Calcula o layout e desenha a árvore no Canvas."""
         self.canvas.delete("all")
         self.positions = {}
         self._leaf_counter = 0
@@ -77,10 +78,10 @@ class TreeDrawer:
         if self.root is None:
             return
 
-        # 1) Calcular posições lógicas (grid)
+ # 1) Calcular posições lógicas (grid)
         self._calculate_layout(self.root, depth=0)
 
-        # 2) Converter para coordenadas de pixel
+# 2) Converter para coordenadas de pixel
         pixel_positions = {}
         for nid, (gx, gy) in self.positions.items():
             px = gx * self.H_SPACING + self.MARGIN
@@ -88,13 +89,13 @@ class TreeDrawer:
             pixel_positions[nid] = (px, py)
         self.positions = pixel_positions
 
-        # 3) Desenhar arestas (linhas)
+ # 3) Desenhar arestas (linhas)
         self._draw_edges(self.root)
-
-        # 4) Desenhar nós (retângulos com texto)
+    
+# 4) Desenhar nós (retângulos com texto)
         self._draw_nodes(self.root)
 
-        # 5) Ajustar scroll region
+ # 5) Ajustar scroll region
         all_x = [p[0] for p in self.positions.values()]
         all_y = [p[1] for p in self.positions.values()]
         if all_x and all_y:
@@ -105,7 +106,6 @@ class TreeDrawer:
             ))
 
     def _calculate_layout(self, node: TreeNode, depth: int):
-        """Layout recursivo: folhas sequenciais, internos = média dos filhos."""
         if not node.children:
             self.positions[id(node)] = (self._leaf_counter, depth)
             self._leaf_counter += 1
@@ -119,7 +119,6 @@ class TreeDrawer:
         self.positions[id(node)] = (avg_x, depth)
 
     def _draw_edges(self, node: TreeNode):
-        """Desenha linhas do nó pai para cada filho."""
         if id(node) not in self.positions:
             return
         px, py = self.positions[id(node)]
@@ -129,7 +128,7 @@ class TreeDrawer:
                 cx, cy = self.positions[id(child)]
                 self.canvas.create_line(
                     px, py + 20, cx, cy - 20,
-                    fill="#555555", width=2, arrow=tk.LAST,
+                    fill="#9CA3AF", width=2, arrow=tk.LAST,  # MODIFICADO
                 )
             self._draw_edges(child)
 
@@ -159,7 +158,8 @@ class TreeDrawer:
         # Retângulo arredondado (simulado com oval + retângulo)
         x1, y1 = x - w, y - h
         x2, y2 = x + w, y + h
-        r = 8  # raio de arredondamento
+        r = 8 # raio de arredondamento
+
 
         # Desenhar retângulo arredondado usando polígono
         self.canvas.create_polygon(
@@ -175,7 +175,7 @@ class TreeDrawer:
         # Texto do nó
         self.canvas.create_text(
             x, y, text=label, anchor="center",
-            font=("Consolas", 9), fill="#222222",
+            font=("Consolas", 9), fill="#111827",  # MODIFICADO
         )
 
         # Recursão para filhos
@@ -188,7 +188,6 @@ class TreeDrawer:
 # ---------------------------------------------------------------------------
 
 class ProcessadorConsultasGUI:
-    """Interface gráfica principal do Processador de Consultas SQL."""
 
     # Consulta de exemplo pré-carregada
     EXEMPLO_SQL = (
@@ -204,44 +203,89 @@ class ProcessadorConsultasGUI:
         self.root.geometry("1100x800")
         self.root.minsize(900, 650)
 
-        # Configurar estilo
+        self.root.configure(bg=BG_COLOR)  # MODIFICADO
+
         style = ttk.Style()
         style.theme_use("clam")
+        style.configure("TNotebook",
+                        background="#0F172A")
+
+        style.configure("TNotebook.Tab",
+                        background="#1E3A8A",   # azul escuro
+                        foreground="white",     # texto branco
+                        padding=8)
+
+        style.map("TNotebook.Tab",
+                  background=[("selected", "#1E40AF")],  # azul mais claro ao selecionar
+                  foreground=[("selected", "white")])
+        
+        style.configure("Custom.TLabelframe",
+                        background="#2E1065")  # roxo escuro
+
+        style.configure("Custom.TLabelframe.Label",
+                        background="#2E1065",
+                        foreground="white")  # texto branco
+        style.configure("Custom.TButton",
+                        background="#1E3A8A",   # azul escuro
+                        foreground="white",
+                        padding=6)
+
+        style.map("Custom.TButton",
+                  background=[("active", "#1E40AF")],  # azul mais claro ao passar mouse
+                  foreground=[("active", "white")])
+        
+        style.configure("Custom.TFrame",
+                background="#2E1065")  
+        
+        style.configure("Custom.TLabel",
+                background="#2E1065",  # roxo escuro (igual ao resto)
+                foreground="white")
 
         self._create_widgets()
 
     def _create_widgets(self):
-        """Cria todos os widgets da interface."""
 
         # ====== Frame Superior: Entrada SQL ======
-        input_frame = ttk.LabelFrame(self.root, text="  Consulta SQL  ", padding=10)
+        input_frame = ttk.LabelFrame(
+            self.root,
+            text="  Consulta SQL  ",
+            padding=10,
+            style="Custom.TLabelframe"  # Modificado
+        )
         input_frame.pack(fill=tk.X, padx=10, pady=(10, 5))
 
         self.sql_input = scrolledtext.ScrolledText(
             input_frame, height=6, font=("Consolas", 11),
-            wrap=tk.WORD, bg="#FAFAFA",
+            wrap=tk.WORD,
+            bg=INPUT_BG,  # Modificado
+            fg=TEXT_COLOR,  # Modificado
+            insertbackground="white"  # Modificado
         )
         self.sql_input.pack(fill=tk.X, pady=(0, 8))
         self.sql_input.insert("1.0", self.EXEMPLO_SQL)
 
         # Frame de botões
         btn_frame = ttk.Frame(input_frame)
+        btn_frame.configure(style="Custom.TFrame")
         btn_frame.pack(fill=tk.X)
 
         self.btn_process = ttk.Button(
             btn_frame, text="  Processar Consulta  ",
+            style="Custom.TButton",  
             command=self._on_process,
         )
         self.btn_process.pack(side=tk.LEFT, padx=(0, 5))
 
         self.btn_clear = ttk.Button(
             btn_frame, text="  Limpar  ",
+            style="Custom.TButton",
             command=self._on_clear,
         )
         self.btn_clear.pack(side=tk.LEFT, padx=(0, 5))
 
         self.btn_example = ttk.Button(
             btn_frame, text="  Exemplo  ",
+            style="Custom.TButton",
             command=self._on_example,
         )
         self.btn_example.pack(side=tk.LEFT, padx=(0, 5))
@@ -251,7 +295,8 @@ class ProcessadorConsultasGUI:
         ttk.Label(
             btn_frame,
             text=f"Tabelas: {tables_str}",
-            font=("Segoe UI", 8), foreground="#666666",
+            font=("Segoe UI", 8),
+            style="Custom.TLabel",  # MODIFICADO
         ).pack(side=tk.RIGHT)
 
         # ====== Frame Inferior: Resultados (Notebook com abas) ======
@@ -262,8 +307,10 @@ class ProcessadorConsultasGUI:
         self.tab_algebra = ttk.Frame(self.notebook)
         self.notebook.add(self.tab_algebra, text="  Álgebra Relacional  ")
         self.txt_algebra = scrolledtext.ScrolledText(
-            self.tab_algebra, font=("Consolas", 11), wrap=tk.WORD,
-            state=tk.DISABLED, bg="#FDFDFD",
+            self.tab_algebra, font=("Consolas", 11),
+            state=tk.DISABLED,
+            bg=CANVAS_BG,  # MODIFICADO
+            fg="white"  # MODIFICADO
         )
         self.txt_algebra.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
@@ -271,20 +318,24 @@ class ProcessadorConsultasGUI:
         self.tab_optim = ttk.Frame(self.notebook)
         self.notebook.add(self.tab_optim, text="  Otimização  ")
         self.txt_optim = scrolledtext.ScrolledText(
-            self.tab_optim, font=("Consolas", 11), wrap=tk.WORD,
-            state=tk.DISABLED, bg="#FDFDFD",
+            self.tab_optim, font=("Consolas", 11),
+            state=tk.DISABLED,
+            bg=CANVAS_BG,
+            fg="white"
         )
         self.txt_optim.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # Aba 3: Grafo de Operadores
+
+         # Aba 3: Grafo de Operadores
         self.tab_graph = ttk.Frame(self.notebook)
         self.notebook.add(self.tab_graph, text="  Grafo de Operadores  ")
+
 
         # Canvas com scrollbars para o grafo
         graph_container = ttk.Frame(self.tab_graph)
         graph_container.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        self.canvas = tk.Canvas(graph_container, bg="white")
+        self.canvas = tk.Canvas(graph_container, bg=CANVAS_BG)  # MODIFICADO
         scrollbar_x = ttk.Scrollbar(graph_container, orient=tk.HORIZONTAL, command=self.canvas.xview)
         scrollbar_y = ttk.Scrollbar(graph_container, orient=tk.VERTICAL, command=self.canvas.yview)
         self.canvas.configure(xscrollcommand=scrollbar_x.set, yscrollcommand=scrollbar_y.set)
@@ -297,25 +348,35 @@ class ProcessadorConsultasGUI:
         self.tab_plan = ttk.Frame(self.notebook)
         self.notebook.add(self.tab_plan, text="  Plano de Execução  ")
         self.txt_plan = scrolledtext.ScrolledText(
-            self.tab_plan, font=("Consolas", 11), wrap=tk.WORD,
-            state=tk.DISABLED, bg="#FDFDFD",
+            self.tab_plan, font=("Consolas", 11),
+            state=tk.DISABLED,
+            bg=CANVAS_BG,
+            fg="white"
         )
         self.txt_plan.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
 
         # ====== Barra de Status ======
         self.status_var = tk.StringVar(value="Pronto. Digite uma consulta SQL e clique em 'Processar Consulta'.")
         status_bar = ttk.Label(
-            self.root, textvariable=self.status_var, relief=tk.SUNKEN,
-            anchor=tk.W, padding=(10, 4),
+            self.root,
+            textvariable=self.status_var,
+            anchor=tk.W,
+            padding=(10, 4),
+            background=BG_COLOR,  # MODIFICADO
+            foreground="white"  # MODIFICADO
         )
         status_bar.pack(fill=tk.X, side=tk.BOTTOM, padx=10, pady=(0, 10))
+
 
         # Aba 5: Árvore Texto (representação textual da árvore)
         self.tab_tree_text = ttk.Frame(self.notebook)
         self.notebook.add(self.tab_tree_text, text="  Árvore (Texto)  ")
         self.txt_tree = scrolledtext.ScrolledText(
-            self.tab_tree_text, font=("Consolas", 11), wrap=tk.NONE,
-            state=tk.DISABLED, bg="#FDFDFD",
+            self.tab_tree_text, font=("Consolas", 11),
+            state=tk.DISABLED,
+            bg=CANVAS_BG,
+            fg="white"
         )
         self.txt_tree.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
